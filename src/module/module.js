@@ -5,13 +5,13 @@ export default class Module {
   constructor (rawModule, runtime) {
     this.runtime = runtime
     // Store some children item
-    this._children = Object.create(null)
+    this._children = Object.create(null) // 它的所有子模块
     // Store the origin module object which passed by programmer
-    this._rawModule = rawModule
+    this._rawModule = rawModule // 模块的配置
     const rawState = rawModule.state
 
     // Store the origin module's state
-    this.state = (typeof rawState === 'function' ? rawState() : rawState) || {}
+    this.state = (typeof rawState === 'function' ? rawState() : rawState) || {} // 这个模块定义的 state
   }
 
   get namespaced () {

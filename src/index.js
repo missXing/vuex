@@ -19,7 +19,7 @@ export {
   install,
   mapState,
   mapMutations,
-  mapGetters,
+  mapGetters, 
   mapActions,
   createNamespacedHelpers,
   createLogger

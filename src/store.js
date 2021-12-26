@@ -5,17 +5,20 @@ import { forEachValue, isObject, isPromise, assert, partial } from './util'
 
 let Vue // bind on install
 
+// 初始化模块，安装模块和初始化 store._vm
 export class Store {
   constructor (options = {}) {
     // Auto install if it is not done yet and `window` has `Vue`.
     // To allow users to avoid auto-installation in some cases,
     // this code should be placed here. See #731
+    // 通过外链而不是npm包引入的时候
     if (!Vue && typeof window !== 'undefined' && window.Vue) {
       install(window.Vue)
     }
 
     if (__DEV__) {
       assert(Vue, `must call Vue.use(Vuex) before creating a store instance.`)
+      // 依赖Promise
       assert(typeof Promise !== 'undefined', `vuex requires a Promise polyfill in this browser.`)
       assert(this instanceof Store, `store must be called with the new operator.`)
     }
@@ -31,7 +34,7 @@ export class Store {
     this._actionSubscribers = []
     this._mutations = Object.create(null)
     this._wrappedGetters = Object.create(null)
-    this._modules = new ModuleCollection(options)
+    this._modules = new ModuleCollection(options) // root module构建过程的入口
     this._modulesNamespaceMap = Object.create(null)
     this._subscribers = []
     this._watcherVM = new Vue()
@@ -55,6 +58,8 @@ export class Store {
     // init root module.
     // this also recursively registers all sub-modules
     // and collects all module getters inside this._wrappedGetters
+    // 安装模块，
+    // 目标是对模块中的 state、getters、mutations、actions 做初始化工作
     installModule(this, state, [], this._modules.root)
 
     // initialize the store vm, which is responsible for the reactivity
@@ -278,6 +283,7 @@ function resetStore (store, hot) {
   resetStoreVM(store, state, hot)
 }
 
+// 建立 getters 和 state 的联系
 function resetStoreVM (store, state, hot) {
   const oldVm = store._vm
 
@@ -330,9 +336,11 @@ function resetStoreVM (store, state, hot) {
 
 function installModule (store, rootState, path, module, hot) {
   const isRoot = !path.length
+  // 获取命名空间
   const namespace = store._modules.getNamespace(path)
 
   // register in namespace map
+  // 把 namespace 对应的模块保存下来，为了方便以后能根据 namespace 查找模块
   if (module.namespaced) {
     if (store._modulesNamespaceMap[namespace] && __DEV__) {
       console.error(`[vuex] duplicate namespace ${namespace} for the namespaced module ${path.join('/')}`)
@@ -356,6 +364,7 @@ function installModule (store, rootState, path, module, hot) {
     })
   }
 
+  // 构造一个本地上下文环境
   const local = module.context = makeLocalContext(store, namespace, path)
 
   module.forEachMutation((mutation, key) => {
@@ -386,6 +395,9 @@ function installModule (store, rootState, path, module, hot) {
 function makeLocalContext (store, namespace, path) {
   const noNamespace = namespace === ''
 
+  // 定义了 local 对象，
+  // 对于 dispatch 和 commit 方法，如果没有 namespace，它们就直接指向了 root store 的 dispatch 和 commit 方法，
+  // 否则会创建方法，把 type 自动拼接上 namespace，然后执行 store 上对应的方法。
   const local = {
     dispatch: noNamespace ? store.dispatch : (_type, _payload, _options) => {
       const args = unifyObjectStyle(_type, _payload, _options)

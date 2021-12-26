@@ -25,15 +25,22 @@ export default class ModuleCollection {
     update([], this.root, rawRootModule)
   }
 
+  // path 表示路径，因为我们整体目标是要构建一颗模块树，path 是在构建树的过程中维护的路径；
+  // rawModule 表示定义模块的原始配置；
+  // runtime 表示是否是一个运行时创建的模块
   register (path, rawModule, runtime = true) {
     if (__DEV__) {
       assertRawModule(path, rawModule)
     }
 
+    // 创建一个 Module 的实例
+    // Module 是用来描述单个模块的类
     const newModule = new Module(rawModule, runtime)
+    // 当前的 path 的长度如果为 0，则说明它是一个根模块
     if (path.length === 0) {
       this.root = newModule
     } else {
+      // 非根模块 建立父子关系
       const parent = this.get(path.slice(0, -1))
       parent.addChild(path[path.length - 1], newModule)
     }
